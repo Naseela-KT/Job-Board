@@ -1,59 +1,76 @@
 /* eslint-disable no-unused-vars */
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-// import { validate } from "../validations/AddValidation";
+import { useMutation, gql } from "@apollo/client";
+import { validate } from "../validations/AddValidation";
+import toast from "react-hot-toast";
 
+// Initial values for the form
 const initialValues = {
   title: "",
   role: "",
   location: "",
-  salary: null,
+  salary: "",
 };
 
+// GraphQL mutation to add a new job
+const ADD_JOB = gql`
+mutation InsertJobs($title: String, $role: String, $location: String, $salary: Int) {
+  insert_jobs(objects: {title: $title, role: $role, location: $location, salary: $salary}) {
+    affected_rows
+    returning {
+      id
+			title
+			role
+			location
+			salary
+    }
+  }
+}
+`;
 
 const AddJob = () => {
   const [formValues, setFormValues] = useState(initialValues);
   const [formErrors, setFormErrors] = useState(initialValues);
   const [formError, setFormError] = useState(""); // State to handle form errors
   const navigate = useNavigate();
+  const [addJob, { error: mutationError }] = useMutation(ADD_JOB);
 
+  // Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormValues({ ...formValues, [name]: value });
-    // const errors = validate({ ...formValues, [name]: value });
-    // setFormErrors((prevErrors) => ({ ...prevErrors, ...errors }));
+    setFormValues({ ...formValues, [name]: name === 'salary' ? parseFloat(value) : value });
+    const errors = validate({ ...formValues, [name]: value });
+    setFormErrors((prevErrors) => ({ ...prevErrors, ...errors }));
   };
 
-  // const handleSubmit = async (event) => {
-  //   event.preventDefault();
-  //   setFormError("");
-  //   const errors = validate(formValues);
-  //   setFormErrors(errors);
-  //   console.log(Object.values(errors));
-  //   if (Object.values(errors).every((error) => error === "")) {
-  //   try {
-  //     const response = await userApiRequest(
-  //       {
-  //         method: "post",
-  //         url: `/add`,
-  //         data: formValues,
-  //       },
-  //       { withCredentials: true }
-  //     );
-  //     console.log("User added:", response.data);
-  //     navigate("/");
+  // Handle form submission
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setFormError("");
+    const errors = validate(formValues);
+    setFormErrors(errors);
 
-  //   } catch (error) {
-  //     console.error("Error adding user:", error);
-  //     setFormError(error.response.data.message)
-  //   }
-  // }};
+    // Check if there are no validation errors
+    if (Object.values(errors).every((error) => error === "")) {
+      try {
+        // Call the GraphQL mutation to add a new job
+        const { data } = await addJob({ variables: { ...formValues, salary: parseFloat(formValues.salary) } });
+        console.log("Job added:", data);
+        toast.success("Job added!")
+        navigate("/");
+      } catch (error) {
+        console.error("Error adding job:", error);
+        setFormError("Failed to add job. Please try again.");
+      }
+    }
+  };
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100 mt-5">
       <div className="w-full max-w-sm bg-white shadow-md rounded-lg p-8">
         <h2 className="text-2xl font-bold text-center mb-6">Add Job</h2>
-        <form>
+        <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label
               htmlFor="title"
@@ -70,18 +87,13 @@ const AddJob = () => {
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#020F3C]"
               placeholder="Enter title"
             />
+            {formErrors.title && (
+              <p className="text-sm text-red-500 mb-4">{formErrors.title}</p>
+            )}
           </div>
-          {formErrors.title ? (
-            <p
-              className="text-sm"
-              style={{ color: "red", marginBottom: 10, marginTop: -10 }}
-            >
-              {formErrors.title}
-            </p>
-          ) : null}
           <div className="mb-4">
             <label
-              htmlFor="text"
+              htmlFor="role"
               className="block text-gray-700 font-medium mb-2"
             >
               Role
@@ -95,15 +107,10 @@ const AddJob = () => {
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#020F3C]"
               placeholder="Enter role"
             />
+            {formErrors.role && (
+              <p className="text-sm text-red-500 mb-4">{formErrors.role}</p>
+            )}
           </div>
-          {formErrors.role ? (
-            <p
-              className="text-sm"
-              style={{ color: "red", marginBottom: 10, marginTop: -10 }}
-            >
-              {formErrors.role}
-            </p>
-          ) : null}
           <div className="mb-4">
             <label
               htmlFor="location"
@@ -112,27 +119,21 @@ const AddJob = () => {
               Location
             </label>
             <input
-              name="role"
+              name="location"
               type="text"
-              id="role"
+              id="location"
               value={formValues.location}
               onChange={handleChange}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#020F3C]"
               placeholder="Enter location"
             />
+            {formErrors.location && (
+              <p className="text-sm text-red-500 mb-4">{formErrors.location}</p>
+            )}
           </div>
-          {formErrors.location ? (
-            <p
-              className="text-sm"
-              style={{ color: "red", marginBottom: 10, marginTop: -10 }}
-            >
-              {formErrors.location}
-            </p>
-          ) : null}
-
           <div className="mb-4">
             <label
-              htmlFor="email"
+              htmlFor="salary"
               className="block text-gray-700 font-medium mb-2"
             >
               Salary
@@ -146,16 +147,10 @@ const AddJob = () => {
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#020F3C]"
               placeholder="Enter salary"
             />
+            {formErrors.salary && (
+              <p className="text-sm text-red-500 mb-4">{formErrors.salary}</p>
+            )}
           </div>
-          {formErrors.role ? (
-            <p
-              className="text-sm"
-              style={{ color: "red", marginBottom: 10, marginTop: -10 }}
-            >
-              {formErrors.role}
-            </p>
-          ) : null}
-
 
           {formError && (
             <p className="text-red-500 text-sm mb-4">{formError}</p>

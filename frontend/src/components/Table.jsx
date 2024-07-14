@@ -9,6 +9,7 @@ import {
 } from '@material-tailwind/react';
 import { UserPlusIcon } from '@heroicons/react/24/solid';
 
+
 const GET_JOBS = gql`
   query MyQuery {
     jobs {
@@ -200,7 +201,7 @@ export function Table() {
 
       <Dialog open={open} handler={() => handleOpen()} size="xs">
         <DialogHeader>Confirm Deletion</DialogHeader>
-        <DialogBody>Are you sure you want to delete this user?</DialogBody>
+        <DialogBody>Are you sure you want to delete this job?</DialogBody>
         <DialogFooter>
           <Button
             variant="text"

@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import { useQuery, useMutation} from '@apollo/client';
+import { useQuery, useMutation } from '@apollo/client';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import {
@@ -8,8 +8,8 @@ import {
   DialogFooter, CardFooter, Typography
 } from '@material-tailwind/react';
 import { UserPlusIcon } from '@heroicons/react/24/solid';
-import { GET_JOBS,DELETE_JOB } from '../utils/mutations';
-
+import { GET_JOBS, DELETE_JOB } from '../utils/mutations';
+import JobFilter from './JobFilter';
 
 const TABLE_HEAD = ["Title", "Role", "Location", "Salary", "Actions"];
 
@@ -18,6 +18,7 @@ export function Table() {
   const [totalPages, setTotalPages] = useState(1);
   const [open, setOpen] = useState(false);
   const [deleteId, setDeleteId] = useState("");
+  const [filters, setFilters] = useState({ role: null, minSalary: null, maxSalary: null });
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -54,8 +55,19 @@ export function Table() {
     refetch();
   }, [data]);
 
+  const handleFilter = (filterValues) => {
+    setFilters(filterValues);
+    refetch();
+  };
+
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error: {error.message}</p>;
+
+  const filteredJobs = data?.jobs?.filter(job => {
+    return (!filters.role || job.role === filters.role) &&
+      (!filters.minSalary || job.salary >= filters.minSalary) &&
+      (!filters.maxSalary || job.salary <= filters.maxSalary);
+  });
 
   return (
     <>
@@ -73,6 +85,8 @@ export function Table() {
           </Link>
         </div>
       </div>
+
+      <JobFilter onFilter={handleFilter} />
 
       <Card className="h-full w-full overflow-scroll">
         <CardBody>
@@ -96,8 +110,8 @@ export function Table() {
               </tr>
             </thead>
             <tbody>
-              {data?.jobs?.map(({ id, title, role, location, salary }, index) => {
-                const isLast = index === data.jobs.length - 1;
+              {filteredJobs?.map(({ id, title, role, location, salary }, index) => {
+                const isLast = index === filteredJobs.length - 1;
                 const classes = isLast
                   ? "p-4"
                   : "p-4 border-b border-blue-gray-50";
@@ -216,7 +230,7 @@ export function Table() {
             color="red"
             onClick={() => {
               if (deleteId) {
-                deleteJob({variables:{id:deleteId}});
+                deleteJob({ variables: { id: deleteId } });
                 handleOpen(); 
               }
             }}

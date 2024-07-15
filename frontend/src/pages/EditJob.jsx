@@ -1,36 +1,10 @@
 /* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useQuery, useMutation, gql } from '@apollo/client';
+import { useQuery, useMutation, gql } from "@apollo/client";
 import { validate } from "../validations/AddValidation";
 import toast from "react-hot-toast";
-
-
-// Define GraphQL queries and mutations
-const GET_JOB = gql`
-  query jobs_by_pk($id: uuid!) {
-    jobs_by_pk(id: $id) {
-      id
-      location
-      role
-      salary
-      title
-    }
-  }
-`;
-
-const UPDATE_JOB = gql`
-  mutation update_jobs_by_pk($id: uuid!, $object: jobs_set_input!) {
-    update_jobs_by_pk(pk_columns: {id: $id}, _set: $object) {
-      id
-      location
-      role
-      salary
-      title
-    }
-  }
-`;
-
+import { GET_JOB, UPDATE_JOB } from "../utils/mutations";
 
 const initialValues = {
   title: "",
@@ -46,13 +20,16 @@ const EditJob = () => {
   const [formErrors, setFormErrors] = useState(initialValues);
   const [formError, setFormError] = useState("");
 
-  // Extract job ID from query parameters
   const queryParams = new URLSearchParams(location.search);
   const id = queryParams.get("id");
 
-  const { loading: queryLoading, error: queryError, data } = useQuery(GET_JOB, {
+  const {
+    loading: queryLoading,
+    error: queryError,
+    data,
+  } = useQuery(GET_JOB, {
     variables: { id },
-    skip: !id, // Skip the query if ID is not present
+    skip: !id,
   });
 
   useEffect(() => {
@@ -64,8 +41,6 @@ const EditJob = () => {
         salary: data.jobs_by_pk.salary,
       });
     }
-    // Log data to inspect
-    console.log("Query Data:", data);
   }, [data]);
 
   useEffect(() => {
@@ -73,17 +48,18 @@ const EditJob = () => {
   }, [id]);
 
   // Mutation to update job details
-  const [updateJob, { loading: mutationLoading, error: mutationError }] = useMutation(UPDATE_JOB, {
-    onCompleted: () => {
-      setFormValues(initialValues); // Clear form fields after successful submission
-      toast.success("Job updated successfully!")
-      navigate("/"); // Redirect after successful update
-    },
-    onError: (error) => {
-      console.error("Error updating job:", error);
-      setFormError("Error updating job. Please try again.");
-    },
-  });
+  const [updateJob, { loading: mutationLoading, error: mutationError }] =
+    useMutation(UPDATE_JOB, {
+      onCompleted: () => {
+        setFormValues(initialValues);
+        toast.success("Job updated successfully!");
+        navigate("/");
+      },
+      onError: (error) => {
+        console.error("Error updating job:", error);
+        setFormError("Error updating job. Please try again.");
+      },
+    });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -94,12 +70,11 @@ const EditJob = () => {
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    setFormError(""); // Clear any previous errors
-  
-    // Validate form values
+    setFormError("");
+
     const errors = validate(formValues);
     setFormErrors(errors);
-  
+
     if (Object.values(errors).every((error) => error === "")) {
       updateJob({
         variables: {
@@ -114,10 +89,8 @@ const EditJob = () => {
       });
     }
   };
-  
 
   if (queryLoading) return <p>Loading...</p>;
-
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100 mt-5">
@@ -139,7 +112,6 @@ const EditJob = () => {
               onChange={handleChange}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#020F3C]"
               placeholder="Enter title"
-              
             />
             {formErrors.title && (
               <p className="text-sm text-red-500 mb-4">{formErrors.title}</p>
@@ -160,7 +132,6 @@ const EditJob = () => {
               onChange={handleChange}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#020F3C]"
               placeholder="Enter role"
-              
             />
             {formErrors.role && (
               <p className="text-sm text-red-500 mb-4">{formErrors.role}</p>
@@ -181,7 +152,6 @@ const EditJob = () => {
               onChange={handleChange}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#020F3C]"
               placeholder="Enter location"
-              
             />
             {formErrors.location && (
               <p className="text-sm text-red-500 mb-4">{formErrors.location}</p>
@@ -202,7 +172,6 @@ const EditJob = () => {
               onChange={handleChange}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#020F3C]"
               placeholder="Enter salary"
-              
             />
             {formErrors.salary && (
               <p className="text-sm text-red-500 mb-4">{formErrors.salary}</p>

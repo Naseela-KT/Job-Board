@@ -1,20 +1,11 @@
-import { Table } from "../components/Table"
-
-
-
-
-
-
+import { Table } from "../components/Table";
 
 const Home = () => {
-
   return (
-   
     <div className="mx-20 my-20">
-      <Table/>
+      <Table />
     </div>
-   
-  )
-}
+  );
+};
 
-export default Home
+export default Home;

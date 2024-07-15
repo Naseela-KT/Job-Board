@@ -1,9 +1,11 @@
 /* eslint-disable no-unused-vars */
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, gql } from "@apollo/client";
 import { validate } from "../validations/AddValidation";
 import toast from "react-hot-toast";
+import { ADD_JOB } from "../utils/mutations";
 
 // Initial values for the form
 const initialValues = {
@@ -13,30 +15,16 @@ const initialValues = {
   salary: "",
 };
 
-// GraphQL mutation to add a new job
-const ADD_JOB = gql`
-mutation InsertJobs($title: String, $role: String, $location: String, $salary: Int) {
-  insert_jobs(objects: {title: $title, role: $role, location: $location, salary: $salary}) {
-    affected_rows
-    returning {
-      id
-			title
-			role
-			location
-			salary
-    }
-  }
-}
-`;
+
 
 const AddJob = () => {
   const [formValues, setFormValues] = useState(initialValues);
   const [formErrors, setFormErrors] = useState(initialValues);
-  const [formError, setFormError] = useState(""); // State to handle form errors
+  const [formError, setFormError] = useState(""); 
   const navigate = useNavigate();
   const [addJob, { error: mutationError }] = useMutation(ADD_JOB);
 
-  // Handle input changes
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormValues({ ...formValues, [name]: name === 'salary' ? parseFloat(value) : value });
@@ -44,17 +32,16 @@ const AddJob = () => {
     setFormErrors((prevErrors) => ({ ...prevErrors, ...errors }));
   };
 
-  // Handle form submission
+
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setFormError("");
     const errors = validate(formValues);
     setFormErrors(errors);
 
-    // Check if there are no validation errors
     if (Object.values(errors).every((error) => error === "")) {
       try {
-        // Call the GraphQL mutation to add a new job
         const { data } = await addJob({ variables: { ...formValues, salary: parseFloat(formValues.salary) } });
         console.log("Job added:", data);
         toast.success("Job added!")

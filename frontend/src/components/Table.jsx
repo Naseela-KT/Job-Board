@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import { useQuery, useMutation, gql } from '@apollo/client';
+import { useQuery, useMutation} from '@apollo/client';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import {
@@ -8,31 +8,8 @@ import {
   DialogFooter, CardFooter, Typography
 } from '@material-tailwind/react';
 import { UserPlusIcon } from '@heroicons/react/24/solid';
+import { GET_JOBS,DELETE_JOB } from '../utils/mutations';
 
-// Define GraphQL queries and mutations
-const GET_JOBS = gql`
-  query GetJobs {
-    jobs {
-      title
-      salary
-      role
-      location
-      id
-    }
-  }
-`;
-
-const DELETE_JOB = gql`
-mutation delete_jobs_by_pk($id:uuid!){
-  delete_jobs_by_pk(id: $id){
-    id,
-    title,
-    role,
-    location,
-    salary
-  }
-}
-`;
 
 const TABLE_HEAD = ["Title", "Role", "Location", "Salary", "Actions"];
 
@@ -49,7 +26,7 @@ export function Table() {
   const [deleteJob] = useMutation(DELETE_JOB, {
     onCompleted: () => {
       toast.success("Job deleted successfully!");
-      refetch(); // Refresh the job list without reloading the page
+      refetch();
     },
     onError: (error) => {
       console.error("Error deleting job:", error);
@@ -71,9 +48,10 @@ export function Table() {
   useEffect(() => {
     if (data) {
       const totalJobs = data.jobs.length;
-      const jobsPerPage = 10; // Assuming a fixed number of jobs per page
+      const jobsPerPage = 6; 
       setTotalPages(Math.ceil(totalJobs / jobsPerPage));
     }
+    refetch();
   }, [data]);
 
   if (loading) return <p>Loading...</p>;
@@ -239,7 +217,7 @@ export function Table() {
             onClick={() => {
               if (deleteId) {
                 deleteJob({variables:{id:deleteId}});
-                handleOpen(); // Close dialog after deletion
+                handleOpen(); 
               }
             }}
           >

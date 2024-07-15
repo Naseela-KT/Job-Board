@@ -41,7 +41,7 @@ const JobFilter = ({ onFilter }) => {
   if (error) return <p>Error loading roles: {error.message}</p>;
 
   return (
-    <div className="flex flex-col md:flex-row items-center gap-4 p-4 bg-gray-100 rounded-md shadow-md mb-4">
+    <div className="flex flex-col md:flex-row items-center gap-4 p-4 bg-blue-gray-50 rounded-md shadow-sm mb-4">
       <div className="w-full md:w-1/3">
         <Select
           options={roles}

@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
-import React, { useEffect, useState } from 'react';
-import { useQuery, gql } from '@apollo/client';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useQuery, useMutation, gql } from '@apollo/client';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import {
   CardBody, Card, Button, Dialog, DialogHeader, DialogBody,
@@ -9,9 +9,9 @@ import {
 } from '@material-tailwind/react';
 import { UserPlusIcon } from '@heroicons/react/24/solid';
 
-
+// Define GraphQL queries and mutations
 const GET_JOBS = gql`
-  query MyQuery {
+  query GetJobs {
     jobs {
       title
       salary
@@ -22,15 +22,40 @@ const GET_JOBS = gql`
   }
 `;
 
-const TABLE_HEAD = ["Title", "Role", "Location", "Salary","Actions"];
+const DELETE_JOB = gql`
+mutation delete_jobs_by_pk($id:uuid!){
+  delete_jobs_by_pk(id: $id){
+    id,
+    title,
+    role,
+    location,
+    salary
+  }
+}
+`;
+
+const TABLE_HEAD = ["Title", "Role", "Location", "Salary", "Actions"];
 
 export function Table() {
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1); // Initialize with 1 to avoid undefined
+  const [totalPages, setTotalPages] = useState(1);
   const [open, setOpen] = useState(false);
   const [deleteId, setDeleteId] = useState("");
   const navigate = useNavigate();
-  const { data, loading, error } = useQuery(GET_JOBS);
+  const location = useLocation();
+  
+  const { data, loading, error, refetch } = useQuery(GET_JOBS);
+
+  const [deleteJob] = useMutation(DELETE_JOB, {
+    onCompleted: () => {
+      toast.success("Job deleted successfully!");
+      refetch(); // Refresh the job list without reloading the page
+    },
+    onError: (error) => {
+      console.error("Error deleting job:", error);
+      toast.error("Failed to delete job. Please try again.");
+    }
+  });
 
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
@@ -45,9 +70,6 @@ export function Table() {
 
   useEffect(() => {
     if (data) {
-      console.log("here");
-      console.log(data);
-      // Assuming we have a total count of jobs to calculate totalPages
       const totalJobs = data.jobs.length;
       const jobsPerPage = 10; // Assuming a fixed number of jobs per page
       setTotalPages(Math.ceil(totalJobs / jobsPerPage));
@@ -177,8 +199,8 @@ export function Table() {
                 variant="gradient"
                 size="sm"
                 onClick={() => {
-                  const nextPage = page - 1 > 0 ? page - 1 : 1;
-                  navigate(`?page=${nextPage}`);
+                  const prevPage = page - 1 > 0 ? page - 1 : 1;
+                  navigate(`?page=${prevPage}`);
                 }}
               >
                 Previous
@@ -214,7 +236,12 @@ export function Table() {
           <Button
             variant="gradient"
             color="red"
-            // onClick={() => { deleteUser(); handleOpen(); }}
+            onClick={() => {
+              if (deleteId) {
+                deleteJob({variables:{id:deleteId}});
+                handleOpen(); // Close dialog after deletion
+              }
+            }}
           >
             <span>Confirm</span>
           </Button>
